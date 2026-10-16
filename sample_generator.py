@@ -73,6 +73,40 @@ def create_encrypted_zip() -> bytes:
         raw[cd_pos + 8] = 1
     return bytes(raw)
 
+def create_macro_xlsm() -> bytes:
+    """Returns a harmless minimal xlsm containing a synthetic vbaProject.bin entry."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", b'<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+        zf.writestr("xl/workbook.xml", b'<workbook/>')
+        zf.writestr("xl/vbaProject.bin", b"MOCK_VBA_BIN_SAFE_DATA")
+    return buf.getvalue()
+
+def create_macro_pptm() -> bytes:
+    """Returns a harmless minimal pptm containing a synthetic vbaProject.bin entry."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", b'<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+        zf.writestr("ppt/presentation.xml", b'<presentation/>')
+        zf.writestr("ppt/vbaProject.bin", b"MOCK_VBA_BIN_PPTM")
+    return buf.getvalue()
+
+def create_malformed_office_docx() -> bytes:
+    """Returns corrupted non-zip bytes named with .docx extension."""
+    return b"PK\x03\x04\x00\x00CORRUPT_NON_ZIP_CONTAINER_STREAM_DATA"
+
+def create_corrupt_pdf() -> bytes:
+    """Returns corrupted PDF missing %PDF- header."""
+    return b"CORRUPTED_PDF_PAYLOAD_MISSING_MAGIC_HEADER"
+
+def create_unknown_binary() -> bytes:
+    """Returns 32 bytes of unrecognized binary data (application/octet-stream)."""
+    return b"\x12\x34\x56\x78\x9A\xBC\xDE\xF0\x01\x02\x03\x04\x05\x06\x07\x08" * 2
+
+def create_mismatch_pdf_png() -> bytes:
+    """Returns a PNG file named invoice.pdf (mime/extension mismatch)."""
+    return b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4"
+
 
 class SampleGenerator:
     @staticmethod

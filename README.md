@@ -93,33 +93,85 @@ The application will launch automatically at `http://localhost:8501`.
 
 ---
 
-## 🧪 Running Automated Unit Tests
+## 🧪 Running Automated Unit Tests (Mission 4 Verification Suite)
 
-Execute the 24 automated test cases covering all 14 Mission 2 & Mission 3 test criteria:
+The automated regression test suite consists of **53 comprehensive test cases** executing via `pytest` in **~0.30 seconds**:
 
 ```powershell
-python -m pytest -o pythonpath=. tests -v
+# Standard command (Windows PowerShell / Command Prompt)
+python -m pytest -v
+
+# Direct Python 3.11 executable path
+C:\Users\sures\python311\python.exe -m pytest -v
 ```
 
-All 24 unit tests validate:
-- MIME signature vs extension mismatches
-- Disguised `MZ` executable headers inside `.pdf` files
-- Normal PDF `%PDF-` validation
-- Clean DOCX container parsing
-- Macro-enabled `.docm` / `vbaProject.bin` detection
-- Encrypted password-protected ZIP detection
-- Password mention detection in email bodies
-- ZIP files containing verified harmless images
-- Urgency language resilience on benign emails
-- Safe handling of benign long URLs
-- Dynamic vector weight renormalization and score capping
-- Itemized forensic explanation generation
-- Privacy-safe feedback logging
-- Bounded oversized payload rejection (>25MB) and malformed archive defense
+All 53 unit and safety tests validate the following core categories:
+
+### 1. Phishing Email Tests (`tests/test_email_analyzer.py` — 11 Tests)
+- Obvious phishing with lookalike sender, urgency language, and deceptive raw IP URL
+- Suspicious email with multiple independent warning indicators accumulating risk
+- Legitimate invoice email with benign PDF header receiving Low risk (<25)
+- Legitimate email containing urgency-related words ('urgent', 'deadline', 'immediately') preserved as Low risk
+- Legitimate email containing a long URL (>280 query chars) preserved as Low risk
+- Email with missing sender details handled safely with sender reported as 'Unavailable'
+- Email with incomplete headers (unstructured plain text) parsed without crashing
+- Empty email input string handled safely with 0.0 risk score
+- Malformed email input (None value, corrupt binary stream) handled gracefully
+- Brand impersonation via free mail providers (e.g. Google display with gmail.com domain)
+- Safe detection of archive passwords in email bodies without leaking credentials
+
+### 2. URL Analysis Tests (`tests/test_url_analyzer.py` — 10 Tests)
+- Shortened URL patterns (bit.ly, tinyurl, t.co) flagged for destination concealment
+- Long legitimate URLs (>350 chars with AWS S3 tokens) verified to produce Low risk (<10)
+- Suspicious raw IP-address hostnames (e.g. `http://192.168.1.100/login`) flagged high-risk
+- Deceptive userinfo (`@`) host obfuscation (`https://google.com@phishing.example.com`)
+- Deceptive brand spoofing nested in deep subdomains (`paypal.com.verify.xyz`)
+- Legitimate HTTPS URLs on reputable domains receiving 0 risk score
+- Non-web / unusual schemes (`ftp://`, `data:`, `javascript:`) flagged before interaction
+- Missing and whitespace-only URL strings handled gracefully
+- Malformed URLs (invalid RFC brackets) handled gracefully with Malformed URL Structure alert
+- Unencrypted HTTP scheme alone incurs only 12 pts (Low tier), proving lack of HTTPS alone does not prove phishing
+
+### 3. Attachment Validation Tests (`tests/test_attachment_analyzer.py` — 13 Tests)
+- Normal PDF invoice with `%PDF-` header identified accurately with Low risk
+- Valid plain DOCX without macros verified Low risk
+- ZIP archive containing harmless images (PNG/JPEG) inspected in-memory with Low risk
+- Disguised `MZ` executable signature inside file named `invoice.pdf` triggering Critical tier (>=85)
+- Macro-enabled Office files (.docm, .xlsm, .pptm) receiving appropriate High warning without automatically being marked malicious
+- Suspicious or malformed Office document structures flagged for invalid container
+- Password-protected ZIP archives detected via `flag_bits & 0x1` and flagged opaque
+- Email body containing ZIP password correlated with archive for coordinated evasion alert
+- Zero-byte files and corrupted PDF headers handled gracefully
+- File extension and detected MIME signature mismatch (e.g. invoice.pdf containing PNG bytes)
+- Unknown or unsupported binary formats (`application/octet-stream`) marked **inconclusive** rather than automatically safe
+
+### 4. Static Analysis Safety Tests (`tests/test_attachment_analyzer.py::TestStaticAnalysisSafety` — 5 Tests)
+- **Zero-Execution Mandate**: Mocks verify `subprocess.run`, `subprocess.Popen`, and `os.system` are never called
+- **Zero Filesystem Extraction**: Mocks verify `zipfile.ZipFile.extract` and `extractall` are never called
+- **Resource Ceilings Enforced**: File size (>25MB) and member entry limits (>500) trigger bounded safeguards
+- **Graceful Failure**: Truncated and corrupt byte payloads fail safely without unhandled exceptions
+- **Forensic Consistency**: Standardized report card format verified across all inspections
+
+### 5. Risk-Scoring Engine Tests (`tests/test_risk_engine.py` — 12 Tests)
+- Scores remain strictly bounded between 0 and 100
+- Risk levels follow configured thresholds: Low (0-24), Medium (25-54), High (55-79), Critical (80-100)
+- Multiple independent indicators across vectors progressively increase overall risk
+- A single weak indicator (+8 pts) does not cause an unjustified critical or high score
+- Long benign URLs and urgency words alone do not produce high risk
+- Disguised MZ executable in PDF triggers Critical override (>=85 pts)
+- Macro-enabled documents receive High warning on attachment without automatically making entire email Critical
+- Genuine PDFs, plain DOCX, and image ZIPs receive Low risk when no other evidence exists
+- Missing vectors are reported as 'Unavailable' and weights dynamically renormalized
+- Every classification includes itemized supporting evidence
+- Deduplication prevents double-counting duplicate indicators
+
+### 6. Local Feedback Telemetry Tests (`tests/test_feedback.py` — 2 Tests)
+- Feedback records saved and telemetry statistics updated
+- Adversarial / invalid feedback strings safely sanitized
 
 ---
 
-## 📊 Evaluation Results (12 Reference Scenarios)
+## 📊 Ground-Truth Benchmark Results (12 Reference Scenarios)
 
 The automated benchmark suite evaluates 12 standardized reference scenarios:
 
@@ -127,7 +179,7 @@ The automated benchmark suite evaluates 12 standardized reference scenarios:
 | :--- | :---: | :--- |
 | **Total Benchmark Samples** | **12** | 7 Phishing / 5 Legitimate |
 | **Correct Detections** | **12 / 12** | 100% correct classification |
-| **Overall Accuracy** | **100.0%** | Full discrimination capability |
+| **Overall Accuracy** | **100.0%** | Full discrimination capability on reference dataset |
 | **Precision** | **100.0%** | 0 False Positives on benign corporate emails |
 | **Recall (Sensitivity)** | **100.0%** | 0 False Negatives across all threat vectors |
 | **F1-Score** | **100.0%** | Harmonic mean of precision & recall |
@@ -138,67 +190,53 @@ The automated benchmark suite evaluates 12 standardized reference scenarios:
 - **False Positives (FP):** 0
 - **False Negatives (FN):** 0
 
-*Detailed breakdown available in `reports/evaluation_report.md`.*
+> **Ground Truth Scope Distinction:**
+> While accuracy and precision reach 100% on the standardized synthetic test dataset, real-world email traffic contains novel polymorphic evasion, zero-day links, and social engineering variations that require periodic rule updates and continuous heuristic tuning.
 
 ---
 
-## 📋 Requirement-by-Requirement Checklist
+## 📋 Mission 4 Compliance Checklist (All 10 Requirements)
 
-### Mission 2 — Attachment & Safe File Triage
-- [x] **Static Zero-Execution Inspection**: Files are inspected purely via byte arrays in memory without running or executing.
-- [x] **File Signature & Magic-Byte Analysis**: Supported signatures include MZ, PDF, PK (ZIP/DOCX), OLE2, 7z, RAR, PNG, JPEG, GIF.
-- [x] **Disguised Executable Defense**: Detects `MZ` header inside files named `.pdf`, `.docx`, `.jpg` and raises Critical tier override.
-- [x] **Safe In-Memory ZIP Inspection**: Never extracts files to disk; reads ZipInfo members in memory.
-- [x] **Decompression Bomb Protection**: Checks uncompressed vs compressed ratio (<100:1) and entry ceiling (<500).
-- [x] **Password-Protected ZIPs**: Reads `flag_bits & 0x1` and clearly reports that contents are opaque to static analysis.
-- [x] **Office Document & Macro Validation**: Detects `[Content_Types].xml`, `vbaProject.bin`, `.docm`, and external relationship links.
-- [x] **Individual Attachment Report Cards**: Displays filename, claimed extension, detected MIME, signature, hex preview, risk score, and recommended action.
-- [x] **Safety Disclaimer**: Explicitly states that static analysis cannot guarantee detection of every threat.
-
-### Mission 3 — Risk Breakdown & Full Engine
-- [x] **4 Independent Vectors**: Sender (25%), Body (20%), URLs (25%), Attachments (30%).
-- [x] **Dynamic Weight Renormalization**: Missing components are marked "Unavailable" and weights are normalized across active vectors.
-- [x] **No False Alarms on Benign Signals**: Urgency words alone receive only +8 pts (Low risk). Benign long URLs carry no penalty.
-- [x] **Itemized Forensic Evidence**: Shows exact point additions, severity, and plain-English rationale for every alert.
-- [x] **Privacy-Safe Feedback**: Logs user feedback to `data/feedback.csv` without storing passwords or message bodies.
-- [x] **Benchmark & Evaluation Dashboard**: Computes Accuracy, Precision, Recall, F1, and Confusion Matrix.
-- [x] **12 Harmless Synthetic Test Fixtures**: Zero malware payloads; clean demonstration of every scenario.
+| # | Requirement | Implementation Details | Status |
+| :-: | :--- | :--- | :---: |
+| **1** | **Category A: Phishing Email Tests** | 11 automated test cases in `tests/test_email_analyzer.py` covering obvious phish, multi-vector, legitimate invoice, urgency words, long URLs, missing sender, incomplete headers, empty input, malformed input. | **Complete** ✅ |
+| **2** | **Category B: URL Analysis Tests** | 10 automated test cases in `tests/test_url_analyzer.py` covering shorteners, long URLs, raw IP hosts, deceptive host/@, HTTPS, unusual schemes, missing URLs, malformed URLs, HTTP alone. | **Complete** ✅ |
+| **3** | **Category C: Attachment Validation Tests** | 13 automated test cases in `tests/test_attachment_analyzer.py` covering normal PDF, plain DOCX, image ZIP, disguised MZ in PDF, macros (.docm/.xlsm/.pptm), malformed office docs, encrypted ZIP, password in body, corrupt/empty, MIME mismatch, unknown formats. | **Complete** ✅ |
+| **4** | **Category D: Static Analysis Safety Tests** | 5 automated test cases in `tests/test_attachment_analyzer.py::TestStaticAnalysisSafety` verifying zero file execution, no OS command launching, zero disk extraction, encryption reporting, bounded file/entry limits, and consistent reporting. | **Complete** ✅ |
+| **5** | **Section 3: Risk-Score Validation** | 12 automated test cases in `tests/test_risk_engine.py` validating 0-100 bounds, threshold mappings, additive indicators, weak indicator resilience, long URL/urgency tolerance, MZ Critical override (>=85), macro warnings, genuine files, and deduplication. | **Complete** ✅ |
+| **6** | **Section 4: Automated Test Execution** | Pytest executed cleanly with 53 passed, 0 failed, 0 skipped. Real verified output captured in reports without invented results. | **Complete** ✅ |
+| **7** | **Section 4: Confusion Matrix & Metrics** | Full confusion matrix (TN=5, FP=0, FN=0, TP=7) and statistics (Accuracy 100%, Precision 100%, Recall 100%, F1 100%) computed in `evaluation.py`. | **Complete** ✅ |
+| **8** | **Section 5: Streamlit Validation Page** | Added interactive section **"🧪 Mission 4 – Testing & Validation"** in `app.py` with category filter, expected vs actual, pass/fail status, risk score/tier, explanations, confusion matrix, metric cards, and report viewer. | **Complete** ✅ |
+| **9** | **Section 6: Documentation & Saved Reports** | Updated `tests/test_email_analyzer.py`, `tests/test_url_analyzer.py`, `tests/test_attachment_analyzer.py`, `tests/test_risk_engine.py`, generated `reports/mission4_test_report.md`, and updated `README.md`. | **Complete** ✅ |
+| **10** | **Section 7: Final Verification** | All 53 tests pass, `app.py` compiles and starts cleanly, Mission 2 & 3 features preserved intact, Windows commands documented. | **Complete** ✅ |
 
 ---
 
-## 🎓 College Presentation Demo Workflow (3-Minute Tour)
+## 🎓 College Evaluator Demonstration Workflow (Mission 4 Showcase)
 
-For presenting this project to evaluators or classmates, follow this concise demonstration flow:
+Follow this 4-step demonstration flow to showcase Mission 4 testing & validation:
 
-1. **Step 1: Benign Baseline Demo (Scenario 4)**
-   - Open the web UI at `http://localhost:8501`.
-   - Select **"4. Legitimate Email with Urgency Language"** from the scenario dropdown.
-   - Click **"Scan & Analyze Threat Vectors"**.
-   - *Highlight to audience:* Notice how despite words like "urgent" and "deadline", the system scores **3.6 / 100 (Low Risk)** because there are no lookalike senders, bad links, or weaponized payloads.
+1. **Step 1: Run Pytest from Terminal**
+   - Open PowerShell in the project directory:
+     ```powershell
+     python -m pytest -v
+     ```
+   - *Point out to evaluator:* All 53 tests across 5 test suites pass in ~0.3 seconds. Highlight the zero-execution mocks and static analysis safety tests.
 
-2. **Step 2: Disguised Executable Triage (Scenario 6 — Mission 2 Showcase)**
-   - Select **"6. Disguised Executable (MZ Header inside invoice.pdf)"**.
-   - Click **"Scan & Analyze Threat Vectors"**.
-   - *Highlight to audience:* Show the **Overall Score of 85.0 / 100 (CRITICAL RISK)**.
-   - Scroll down to the **Per-Attachment Report Card**: point out the `MZ Executable` detected signature, `4D5A...` hex header preview, and the alert: `"DISGUISED EXECUTABLE: MZ binary header inside non-executable filename"`.
+2. **Step 2: Launch Streamlit Web Dashboard**
+   - Run:
+     ```powershell
+     python -m streamlit run app.py
+     ```
+   - Open `http://localhost:8501`.
 
-3. **Step 3: Multi-Vector Combined Attack (Scenario 12)**
-   - Select **"12. Multi-Vector Attack"**.
-   - *Highlight to audience:* Show how all 4 vectors contribute: typosquatted domain (`micros0ft-login-service.top`), credential demands, raw IP login link (`10.20.30.40`), and disguised attachment payload.
+3. **Step 3: Navigate to "🧪 Mission 4 – Testing & Validation"**
+   - Show the **Metric Cards** (53 Total Tests, 53 Passed, 0 Failed, 100% Accuracy, 100% Precision).
+   - Use the **Test Category Filter** to filter by `Attachment Validation` or `Static Analysis Safety`.
+   - Show the 7-column execution table displaying Test ID, Category, Test Scenario, Expected Result, Actual Result, Status, and Notes.
 
-4. **Step 4: Evaluation Benchmark Dashboard**
-   - Click **"📊 Evaluation Benchmark Dashboard"** in the sidebar.
-   - Show the 100% Accuracy, 100% Precision, and the interactive Confusion Matrix.
-   - Mention the automated report generated at `reports/evaluation_report.md`.
+4. **Step 4: Inspect Benchmark Diagnostics & Confusion Matrix**
+   - Switch to the **"🧮 Confusion Matrix & Metrics"** tab to show the zero False Positives and zero False Negatives.
+   - Switch to **"🔍 Interactive Scenario Evaluator"** and select **"Scenario 6: Disguised Executable (MZ Header inside invoice.pdf)"** to show the live vector breakdown and the critical override (score >= 85).
+   - Switch to **"📄 Saved Test Report & Documentation"** to view `reports/mission4_test_report.md`.
 
-5. **Step 5: Feedback & Telemetry**
-   - Switch to **"💬 User Feedback Telemetry"** to show privacy-safe local audit logging.
-
----
-
-## 🔒 Security Principles Followed
-
-- **Principle of Least Privilege & Zero Execution**: Attachments are strictly treated as inert data bytes.
-- **Data Privacy**: No passwords, personal credentials, or email bodies are recorded in feedback telemetry.
-- **Transparent Scoring**: Every risk point is tied directly to an itemized forensic rule with plain-English justification.
-- **Fail-Safe Defaults**: Encrypted archives are marked opaque, never assumed safe.

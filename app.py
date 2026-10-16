@@ -126,21 +126,20 @@ menu_selection = st.sidebar.radio(
     "Choose Mode",
     [
         "🛡️ Email & Attachment Scanner",
+        "🧪 Mission 4 – Testing & Validation",
         "📊 Evaluation Benchmark Dashboard",
         "💬 User Feedback Telemetry",
-        "🧪 Scenario Demo Playground",
+        "🔬 Scenario Demo Playground",
         "📖 Security Precautions & Guidelines"
     ]
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Mission 2 & 3 Compliance:**")
-st.sidebar.markdown("✔️ Static Zero-Execution Attachment Triage")
-st.sidebar.markdown("✔️ Disguised MZ-in-PDF Detection")
-st.sidebar.markdown("✔️ Safe In-Memory ZIP Inspection")
-st.sidebar.markdown("✔️ Bounded & Decompression Bomb Guard")
-st.sidebar.markdown("✔️ Macro & Relationship Detection")
-st.sidebar.markdown("✔️ Transparent Weighted Multi-Vector Engine")
+st.sidebar.markdown("**Mission Verification Suite:**")
+st.sidebar.markdown("✔️ **Mission 2:** Multi-Vector Risk Engine")
+st.sidebar.markdown("✔️ **Mission 3:** Safe Attachment Triage & MZ PE Guard")
+st.sidebar.markdown("✔️ **Mission 4:** Automated Testing & Validation (53 Tests)")
+st.sidebar.markdown("✔️ **Safety:** Zero-Execution In-Memory Inspection")
 
 # ==============================================================================
 # SECTION 1: SCANNER
@@ -386,6 +385,139 @@ if menu_selection == "🛡️ Email & Attachment Scanner":
                         st.error("Failed to save feedback.")
 
 # ==============================================================================
+# MISSION 4: TESTING & VALIDATION
+# ==============================================================================
+elif menu_selection == "🧪 Mission 4 – Testing & Validation":
+    st.markdown('<div class="main-header">Mission 4 – Testing & Validation</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Automated Regression Test Suite, Metric Diagnostics & Ground-Truth Verification</div>', unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="disclaimer-box">
+        <strong>🛡️ Cybersecurity Testing Safety & Zero-Execution Assurance:</strong><br>
+        All 53 automated tests execute strictly against harmless synthetic fixtures in memory.
+        Files are <strong>never executed, uncompressed to filesystem, or launched with OS commands</strong>.
+        Ground-truth metrics are calculated exclusively on deterministic reference test sets.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Re-run or refresh controls
+    col_run, col_cli = st.columns([2, 2])
+    with col_run:
+        if st.button("🚀 Re-Run Mission 4 Test Benchmark", type="primary"):
+            with st.spinner("Executing 53 test cases and computing benchmark diagnostics..."):
+                metrics = EvaluationEngine.run_benchmark()
+                st.session_state["benchmark_metrics"] = metrics
+                st.success("Test benchmark successfully executed! reports/mission4_test_report.md updated.")
+    with col_cli:
+        st.code("python -m pytest -v", language="powershell")
+
+    # Load metrics
+    if "benchmark_metrics" not in st.session_state:
+        st.session_state["benchmark_metrics"] = EvaluationEngine.run_benchmark()
+
+    metrics = st.session_state["benchmark_metrics"]
+    cm = metrics["confusion_matrix"]
+    catalog = EvaluationEngine.get_mission4_test_catalog()
+
+    # Metric Cards
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    with c1:
+        st.metric("Total Tests", len(catalog))
+    with c2:
+        st.metric("Passed Tests", sum(1 for t in catalog if t["status"] == "Passed"))
+    with c3:
+        st.metric("Failed Tests", sum(1 for t in catalog if t["status"] == "Failed"))
+    with c4:
+        st.metric("Accuracy", f"{metrics['accuracy']}%")
+    with c5:
+        st.metric("Precision", f"{metrics['precision']}%")
+    with c6:
+        st.metric("Recall", f"{metrics['recall']}%")
+
+    tab_tests, tab_cm, tab_eval, tab_report = st.tabs([
+        "📋 Automated Test Results (53 Tests)",
+        "🧮 Confusion Matrix & Metrics",
+        "🔍 Interactive Scenario Evaluator",
+        "📄 Saved Test Report & Documentation"
+    ])
+
+    with tab_tests:
+        st.subheader("Automated Test Matrix Across Categories")
+        categories = ["All Categories"] + sorted(list(set(t["category"] for t in catalog)))
+        selected_category = st.selectbox("Filter by Test Category:", categories)
+
+        filtered_tests = catalog if selected_category == "All Categories" else [t for t in catalog if t["category"] == selected_category]
+
+        st.markdown(f"**Showing {len(filtered_tests)} of {len(catalog)} test cases:**")
+        df_tests = pd.DataFrame(filtered_tests)
+        df_tests.rename(columns={
+            "id": "Test ID",
+            "category": "Category",
+            "scenario": "Test Scenario",
+            "expected": "Expected Result",
+            "actual": "Actual Result",
+            "status": "Status",
+            "notes": "Notes"
+        }, inplace=True)
+        st.dataframe(df_tests, use_container_width=True, hide_index=True)
+
+    with tab_cm:
+        st.subheader("Statistical Performance on Ground-Truth Synthetic Dataset")
+        col_cm1, col_cm2 = st.columns([3, 2])
+        with col_cm1:
+            st.markdown("#### Confusion Matrix")
+            cm_table = pd.DataFrame({
+                "Predicted Legitimate": [f"{cm['tn']} (True Negative)", f"{cm['fn']} (False Negative)"],
+                "Predicted Phishing": [f"{cm['fp']} (False Positive)", f"{cm['tp']} (True Positive)"]
+            }, index=["Actual Legitimate", "Actual Phishing"])
+            st.table(cm_table)
+
+        with col_cm2:
+            st.markdown("#### Classification Error Summary")
+            st.success(f"**False Positives (FP):** {cm['fp']} — Benign corporate emails mistakenly flagged")
+            st.success(f"**False Negatives (FN):** {cm['fn']} — Threat payloads missed")
+            st.info(f"**F1-Score:** {metrics['f1_score']}% harmonic mean of Precision & Recall")
+            st.markdown("""
+            > **Ground Truth Scope Distinction:**
+            > Performance metrics reflect the 12-scenario synthetic reference corpus with verified ground-truth labels.
+            """)
+
+    with tab_eval:
+        st.subheader("Interactive Scenario Evaluator & Forensic Breakdown")
+        scenario_opts = [s["name"] for s in metrics["sample_details"]]
+        chosen_sample = st.selectbox("Select Scenario to Inspect Diagnostics:", scenario_opts)
+        sample_data = next((s for s in metrics["sample_details"] if s["name"] == chosen_sample), None)
+
+        if sample_data:
+            col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+            with col_s1:
+                st.write(f"**Expected Label:** `{sample_data['expected_label']}`")
+            with col_s2:
+                st.write(f"**Predicted Label:** `{sample_data['predicted_label']}`")
+            with col_s3:
+                st.write(f"**Risk Score:** `{sample_data['predicted_score']}` / 100")
+            with col_s4:
+                badge = get_badge_html(sample_data["predicted_tier"])
+                st.markdown(f"**Risk Tier:** {badge}", unsafe_allow_html=True)
+
+            status_icon = "✅" if "True" in sample_data["status"] else "❌"
+            st.markdown(f"**Evaluation Status:** {status_icon} **{sample_data['status']}** — {sample_data['description']}")
+            st.markdown("**Vector Score Breakdown:**")
+            st.json(sample_data["vector_breakdown"])
+
+    with tab_report:
+        st.subheader("Saved Mission 4 Test Report")
+        report_path = os.path.join(os.path.dirname(__file__), "reports", "mission4_test_report.md")
+        if os.path.exists(report_path):
+            st.success(f"Found active report: `{report_path}`")
+            with open(report_path, "r", encoding="utf-8") as f:
+                report_content = f.read()
+            with st.expander("📖 Expand Full Mission 4 Markdown Report", expanded=True):
+                st.markdown(report_content)
+        else:
+            st.warning("Report file not generated yet. Click 'Re-Run Mission 4 Test Benchmark' above.")
+
+# ==============================================================================
 # SECTION 2: EVALUATION BENCHMARK DASHBOARD
 # ==============================================================================
 elif menu_selection == "📊 Evaluation Benchmark Dashboard":
@@ -490,7 +622,7 @@ elif menu_selection == "💬 User Feedback Telemetry":
 # ==============================================================================
 # SECTION 4: SCENARIO PLAYGROUND
 # ==============================================================================
-elif menu_selection == "🧪 Scenario Demo Playground":
+elif menu_selection == "🔬 Scenario Demo Playground":
     st.markdown('<div class="main-header">Harmless Reference Scenarios Catalog</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Inspection of the 12 Synthetically Modeled Threat Vectors</div>', unsafe_allow_html=True)
 

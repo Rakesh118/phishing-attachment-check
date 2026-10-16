@@ -140,28 +140,36 @@ class AttachmentAnalyzer:
             ))
             suspicious_features.append(f"PDF header mismatch: detected {detected_desc}")
 
-        if claimed_ext in {".docx", ".xlsx", ".pptm", ".docm"} and detected_mime not in {"application/zip", "application/x-ole-storage"}:
+        if claimed_ext in {".docx", ".xlsx", ".pptm", ".docm", ".xlsm"} and detected_mime not in {"application/zip", "application/x-ole-storage"}:
             indicators.append(RiskIndicator(
                 "attachment", f"Office Format Mismatch ({filename})", 45.0,
                 f"Office document does not contain valid PK zip or OLE2 container signature.", "medium"
             ))
             suspicious_features.append(f"Office container invalid: detected {detected_desc}")
 
-        # 5. PDF Inspection (Static byte scan)
+        # 5. Unknown or unsupported format: marked inconclusive rather than automatically safe
+        if detected_mime == "application/octet-stream" and claimed_ext not in DANGEROUS_EXTENSIONS:
+            indicators.append(RiskIndicator(
+                "attachment", f"Unrecognized Binary Signature ({filename})", 15.0,
+                f"File binary header '{header_hex}' does not match recognized document, archive, or media formats. Static inspection inconclusive.", "low"
+            ))
+            suspicious_features.append(f"Inconclusive format: Unrecognized binary stream ({header_hex})")
+
+        # 6. PDF Inspection (Static byte scan)
         if detected_mime == "application/pdf" or claimed_ext == ".pdf":
             pdf_indicators, pdf_features = AttachmentAnalyzer._inspect_pdf(content, filename)
             indicators.extend(pdf_indicators)
             suspicious_features.extend(pdf_features)
 
-        # 6. ZIP Archive Inspection (Safe in-memory metadata reading)
-        if detected_mime == "application/zip" or claimed_ext in {".zip", ".docx", ".docm", ".xlsx", ".xlsm"}:
+        # 7. ZIP Archive Inspection (Safe in-memory metadata reading)
+        if detected_mime == "application/zip" or claimed_ext in {".zip", ".docx", ".docm", ".xlsx", ".xlsm", ".pptm"}:
             zip_indicators, zip_features = AttachmentAnalyzer._inspect_zip_or_office(
                 content, filename, claimed_ext, context_has_pw
             )
             indicators.extend(zip_indicators)
             suspicious_features.extend(zip_features)
 
-        # 7. Password mention in email correlation
+        # 8. Password mention in email correlation
         if context_has_pw and claimed_ext in {".zip", ".7z", ".rar"}:
             indicators.append(RiskIndicator(
                 "attachment", "Password-Coordinated Archive Concealment", 20.0,

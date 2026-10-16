@@ -65,8 +65,23 @@ class URLAnalyzer:
         Returns parsed metadata and list of RiskIndicators.
         """
         indicators: List[RiskIndicator] = []
+        if not url or not str(url).strip():
+            return {
+                "url": url or "",
+                "scheme": "unavailable",
+                "hostname": "unavailable",
+                "is_ip": False,
+                "is_shortener": False,
+                "uses_https": False,
+                "tld": "",
+                "length": 0,
+                "risk_score": 0.0,
+                "indicator_count": 0,
+                "note": "Empty or missing URL string"
+            }, []
+
         try:
-            parsed = urlparse(url)
+            parsed = urlparse(url.strip())
         except Exception as e:
             return {
                 "url": url,
@@ -88,6 +103,16 @@ class URLAnalyzer:
             indicators.append(RiskIndicator(
                 "url", "Insecure HTTP Scheme", 12.0,
                 f"URL uses unencrypted 'http://' protocol instead of HTTPS ({url[:50]}...).", "low"
+            ))
+        elif not scheme:
+            indicators.append(RiskIndicator(
+                "url", "Missing URL Scheme", 10.0,
+                "URL does not specify an explicit protocol scheme.", "low"
+            ))
+        elif scheme not in {"http", "https"}:
+            indicators.append(RiskIndicator(
+                "url", f"Unusual URL Scheme ({scheme})", 25.0,
+                f"URL uses non-standard protocol scheme '{scheme}://' instead of standard web HTTP/HTTPS.", "medium"
             ))
 
         # Check for userinfo @ spoofing e.g. https://google.com@phishing.site

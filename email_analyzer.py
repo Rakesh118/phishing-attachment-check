@@ -78,6 +78,16 @@ class EmailAnalyzer:
         date_str = ""
         attachments: List[Dict[str, Any]] = []
 
+        if raw_input is None or raw_input == "" or raw_input == b"":
+            return {
+                "sender": "",
+                "reply_to": "",
+                "subject": "",
+                "date": "",
+                "body": "",
+                "attachments": []
+            }
+
         if isinstance(raw_input, bytes):
             try:
                 msg = BytesParser(policy=policy.default).parsebytes(raw_input)
