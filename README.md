@@ -22,7 +22,7 @@
 10. [Example Usage & Walkthrough](#-example-usage--walkthrough)
 11. [Safety Precautions & Zero-Execution Mandate](#-safety-precautions--zero-execution-mandate)
 12. [Evaluation Benchmark & Ground-Truth Results](#-evaluation-benchmark--ground-truth-results)
-13. [Deployment Instructions (Streamlit Community Cloud)](#-deployment-instructions-streamlit-community-cloud)
+13. [Deployment Instructions (Render & Streamlit Cloud)](#-deployment-instructions)
 14. [Known Limitations & Future Improvements](#-known-limitations--future-improvements)
 15. [Documentation Index](#-documentation-index)
 
@@ -317,31 +317,42 @@ $$\begin{pmatrix} \text{True Negatives (TN)} = 5 & \text{False Positives (FP)} =
 
 ---
 
-## ☁️ Deployment Instructions (Streamlit Community Cloud)
+---
 
-This repository is pre-configured for 1-click deployment on **Streamlit Community Cloud**:
+## ☁️ Deployment Instructions
 
-### Step 1: Push Repository to GitHub
-1. Create a new GitHub repository (e.g., `phishing-risk-checker`).
-2. Push your project code:
-   ```powershell
-   git init
-   git add .
-   git commit -m "feat: Mission 5 final repository submission"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/phishing-risk-checker.git
-   git push -u origin main
-   ```
+### Option 1: 1-Click Render Deployment (Free Plan)
 
-### Step 2: Deploy on Streamlit Cloud
-1. Sign in to [share.streamlit.io](https://share.streamlit.io) using your GitHub account.
+The repository includes a ready-to-use [`render.yaml`](file:///c:/Users/sures/OneDrive/Desktop/dummy/render.yaml) Blueprint and [`.python-version`](file:///c:/Users/sures/OneDrive/Desktop/dummy/.python-version) file pre-configured for the **Render Free Web Service Tier**:
+
+1. **Sign in to Render:** Go to [dashboard.render.com](https://dashboard.render.com/) and sign in with your GitHub account.
+2. **Deploy via Blueprint (Recommended):**
+   - Click **New +** → **Blueprint**.
+   - Connect your GitHub repository (`Rakesh118/phishing-attachment-check`).
+   - Render will automatically detect `render.yaml`.
+   - Click **Apply**.
+3. **Alternatively, Deploy via Web Service (Manual):**
+   - Click **New +** → **Web Service**.
+   - Select your repository (`Rakesh118/phishing-attachment-check`).
+   - Configure the following settings:
+     - **Runtime:** `Python 3`
+     - **Build Command:** `pip install -r requirements.txt`
+     - **Start Command:** `streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true`
+     - **Instance Type:** `Free`
+     - **Health Check Path:** `/_stcore/health`
+4. **Access:** Render will build the environment and assign a free HTTPS URL (e.g., `https://phishing-risk-checker.onrender.com`).
+
+---
+
+### Option 2: Streamlit Community Cloud (Free)
+
+1. Sign in to [share.streamlit.io](https://share.streamlit.io) with GitHub.
 2. Click **New app**.
-3. Select your repository (`<your-username>/phishing-risk-checker`), branch (`main`), and main file path:
+3. Select your repository (`Rakesh118/phishing-attachment-check`), branch (`main`), and main file path:
    ```
    app.py
    ```
 4. Click **Deploy!**
-5. The cloud build installs dependencies from `requirements.txt` and launches the live web app in ~1–2 minutes.
 
 ---
 
