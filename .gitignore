@@ -1,10 +1,44 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Pytest and coverage
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Environments and virtualenvs
 .venv/
 venv/
 ENV/
-*.log
+env/
+ENV/
+
+# Streamlit local secrets and configs
+.streamlit/secrets.toml
+
+# Environment variables and secrets
+.env
+*.env
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa*
+id_ed25519*
+
+# OS specific files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# IDE and editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and debug output
+*.log

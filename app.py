@@ -139,6 +139,7 @@ st.sidebar.markdown("**Mission Verification Suite:**")
 st.sidebar.markdown("✔️ **Mission 2:** Multi-Vector Risk Engine")
 st.sidebar.markdown("✔️ **Mission 3:** Safe Attachment Triage & MZ PE Guard")
 st.sidebar.markdown("✔️ **Mission 4:** Automated Testing & Validation (53 Tests)")
+st.sidebar.markdown("✔️ **Mission 5:** Final Repository & Jury Review Ready")
 st.sidebar.markdown("✔️ **Safety:** Zero-Execution In-Memory Inspection")
 
 # ==============================================================================
@@ -506,16 +507,25 @@ elif menu_selection == "🧪 Mission 4 – Testing & Validation":
             st.json(sample_data["vector_breakdown"])
 
     with tab_report:
-        st.subheader("Saved Mission 4 Test Report")
-        report_path = os.path.join(os.path.dirname(__file__), "reports", "mission4_test_report.md")
+        st.subheader("Saved Audit & Evaluation Reports")
+        report_options = {
+            "🏆 Mission 5 Final Submission Report": os.path.join(os.path.dirname(__file__), "reports", "mission5_submission_report.md"),
+            "📋 Mission 4 Automated Test Report": os.path.join(os.path.dirname(__file__), "reports", "mission4_test_report.md"),
+            "📊 Benchmark Evaluation Report": os.path.join(os.path.dirname(__file__), "reports", "evaluation_report.md"),
+            "📐 System Architecture Document": os.path.join(os.path.dirname(__file__), "docs", "architecture.md"),
+            "🎓 Jury Q&A Defense Guide": os.path.join(os.path.dirname(__file__), "docs", "jury_questions.md")
+        }
+        selected_report = st.selectbox("Select Report to View:", list(report_options.keys()))
+        report_path = report_options[selected_report]
+
         if os.path.exists(report_path):
-            st.success(f"Found active report: `{report_path}`")
+            st.success(f"Loaded: `{os.path.basename(report_path)}`")
             with open(report_path, "r", encoding="utf-8") as f:
                 report_content = f.read()
-            with st.expander("📖 Expand Full Mission 4 Markdown Report", expanded=True):
+            with st.expander(f"📖 Expand {selected_report}", expanded=True):
                 st.markdown(report_content)
         else:
-            st.warning("Report file not generated yet. Click 'Re-Run Mission 4 Test Benchmark' above.")
+            st.warning(f"File not found at `{report_path}`. Generate it or check reports directory.")
 
 # ==============================================================================
 # SECTION 2: EVALUATION BENCHMARK DASHBOARD
