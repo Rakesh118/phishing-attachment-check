@@ -119,9 +119,67 @@ def get_badge_html(tier: str) -> str:
         return '<span class="badge-low">LOW RISK</span>'
 
 
-# Sidebar Navigation
-st.sidebar.image("https://img.icons8.com/fluency/96/shield.png", width=64)
-st.sidebar.title("Navigation")
+# ==============================================================================
+# SIDEBAR
+# ==============================================================================
+# 1. Custom CSS injection for sidebar
+st.markdown("""
+<style>
+    /* Dark glass gradient background & border */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 15, 30, 0.98) 100%) !important;
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(6, 182, 212, 0.25) !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #e2e8f0;
+    }
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(6, 182, 212, 0.2) !important;
+    }
+    /* Navigation options: rounded corners and gap */
+    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
+        gap: 6px;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {
+        border-radius: 8px;
+        padding: 8px 12px;
+        background: rgba(30, 41, 59, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+    }
+    /* Hover glow on navigation options */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+        background: rgba(6, 182, 212, 0.12);
+        border-color: #06b6d4;
+        box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+    }
+    /* Bright left border on active navigation option */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+        background: rgba(6, 182, 212, 0.18) !important;
+        border-left: 4px solid #06b6d4 !important;
+        border-color: rgba(6, 182, 212, 0.4);
+        box-shadow: 0 0 14px rgba(6, 182, 212, 0.25);
+    }
+    /* Collapsed expander styling */
+    [data-testid="stSidebar"] [data-testid="stExpander"] {
+        background: rgba(30, 41, 59, 0.45);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 8px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 2. Branded Header
+st.sidebar.markdown("""
+<div style="text-align: center; padding: 10px 0 16px 0; border-bottom: 1px solid rgba(6, 182, 212, 0.2); margin-bottom: 16px;">
+    <div style="font-size: 2.2rem; line-height: 1; margin-bottom: 6px;">🛡️</div>
+    <div style="font-size: 1.15rem; font-weight: 700; color: #06b6d4; letter-spacing: -0.01em;">Phishing Risk Checker</div>
+    <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">Static analysis. Nothing is ever executed.</div>
+</div>
+""", unsafe_allow_html=True)
+
 menu_selection = st.sidebar.radio(
     "Choose Mode",
     [
@@ -135,12 +193,21 @@ menu_selection = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Mission Verification Suite:**")
-st.sidebar.markdown("✔️ **Mission 2:** Multi-Vector Risk Engine")
-st.sidebar.markdown("✔️ **Mission 3:** Safe Attachment Triage & MZ PE Guard")
-st.sidebar.markdown("✔️ **Mission 4:** Automated Testing & Validation (53 Tests)")
-st.sidebar.markdown("✔️ **Mission 5:** Final Repository & Jury Review Ready")
-st.sidebar.markdown("✔️ **Safety:** Zero-Execution In-Memory Inspection")
+
+# 3. Build and test status expander
+with st.sidebar.expander("Build and test status", expanded=False):
+    st.markdown("✔️ **Mission 2:** Multi-Vector Risk Engine")
+    st.markdown("✔️ **Mission 3:** Safe Attachment Triage & MZ PE Guard")
+    st.markdown("✔️ **Mission 4:** Automated Testing & Validation (53 Tests)")
+    st.markdown("✔️ **Mission 5:** Final Repository & Jury Review Ready")
+    st.markdown("✔️ **Safety:** Zero-Execution In-Memory Inspection")
+
+# 4. Small footer badge
+st.sidebar.markdown("""
+<div style="text-align: center; margin-top: 24px; padding: 6px 12px; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 20px; font-size: 0.75rem; color: #06b6d4; font-weight: 500;">
+    Files analysed as bytes only
+</div>
+""", unsafe_allow_html=True)
 
 # ==============================================================================
 # SECTION 1: SCANNER
